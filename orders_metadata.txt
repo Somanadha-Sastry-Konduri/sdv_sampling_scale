@@ -1,0 +1,27 @@
+Metadata for DataFrame orders:
+
+Column Names:
+['order_id', 'vendor_id', 'ship_mode', 'order_status', 'order_purchase_date', 'order_approved_at', 'order_delivered_carrier_date', 'order_delivered_customer_date', 'order_estimated_delivery_date']
+
+Data Types:
+[dtype('O'), dtype('O'), dtype('O'), dtype('O'), dtype('<M8[ns]'), dtype('<M8[ns]'), dtype('<M8[ns]'), dtype('<M8[ns]'), dtype('<M8[ns]')]
+
+Number of Rows:
+1000
+
+Number of Columns:
+9
+
+Summary Statistics:
+                 order_purchase_date  ... order_estimated_delivery_date
+count                           1000  ...                          1000
+mean   2017-12-25 03:22:56.579999744  ...    2018-01-17 15:46:04.800000
+min              2016-10-04 13:15:00  ...           2016-11-25 00:00:00
+25%              2017-09-06 12:39:00  ...           2017-09-28 00:00:00
+50%              2018-01-08 15:43:00  ...           2018-02-06 00:00:00
+75%              2018-04-26 14:31:45  ...           2018-05-22 00:00:00
+max              2018-08-27 15:21:00  ...           2018-09-25 00:00:00
+
+[7 rows x 5 columns]
+
+

@@ -1,0 +1,26 @@
+Metadata for DataFrame transactions:
+
+Column Names:
+['transaction_id', 'order_id', 'sales', 'quantity', 'discount', 'profit', 'payment_type', 'payment_installments']
+
+Data Types:
+[dtype('int64'), dtype('O'), dtype('float64'), dtype('int64'), dtype('float64'), dtype('float64'), dtype('O'), dtype('int64')]
+
+Number of Rows:
+975
+
+Number of Columns:
+8
+
+Summary Statistics:
+       transaction_id        sales    quantity    discount       profit  payment_installments
+count    9.750000e+02   975.000000  975.000000  975.000000   975.000000            975.000000
+mean     1.002587e+06   226.650513    3.612308    0.135056    31.360831              4.463590
+std      1.489917e+03   594.009847    2.049053    0.174108   177.129167              3.189507
+min      1.000068e+06     1.728000    1.000000    0.000000 -1359.992000              1.000000
+25%      1.001296e+06    16.424000    2.000000    0.000000     2.308150              2.000000
+50%      1.002425e+06    47.992000    3.000000    0.100000     8.674400              4.000000
+75%      1.003954e+06   201.584000    5.000000    0.200000    25.725600              6.000000
+max      1.005144e+06  9099.930000   14.000000    0.700000  3177.475000             24.000000
+
+
