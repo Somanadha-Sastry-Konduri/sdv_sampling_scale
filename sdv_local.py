@@ -3,18 +3,41 @@ from sdv.metadata import MultiTableMetadata
 import pandas as pd
 from sdv.multi_table import HMASynthesizer
 from sdv.evaluation.multi_table import evaluate_quality, run_diagnostic
+import boto3
+from io import StringIO
 import warnings
+import time
+from datetime import datetime
 import logging
+from dotenv import dotenv_values
+from tqdm import tqdm
 
 logging.basicConfig(filename='/home/ubuntu/datastes/log_file.txt', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+env_vars = dotenv_values('.env')
 
-orders_df = pd.read_csv(
-    r"/home/ubuntu/datastes/raw_data/orders.csv")
-transactions_df = pd.read_csv(
-    r"/home/ubuntu/datastes/raw_data/transactions.csv")
+session = boto3.Session(
+    aws_access_key_id= env_vars['aws_access_key_id'],
+    aws_secret_access_key=env_vars['aws_secret_access_key'],
+    region_name='us-east-1'
+)
 
-logging.info("Data read from local")
+s3_client = session.client('s3')
+
+bucket_name = 'emrstudio-datasets'
+orders_file_path = 'raw-data/globalmart/orders.csv'
+transactions_file_path = 'raw-data/globalmart/transactions.csv'
+
+s3_object_orders = s3_client.get_object(
+    Bucket=bucket_name, Key=orders_file_path)
+
+s3_object_transactions = s3_client.get_object(
+    Bucket=bucket_name, Key=transactions_file_path)
+
+orders_df = pd.read_csv(s3_object_orders['Body'])
+transactions_df = pd.read_csv(s3_object_transactions['Body'])
+
+logging.info("Data read from S3 complete")
 
 # Check for duplicates and drop it if any
 orders_df = orders_df.drop_duplicates(keep="last")
@@ -268,23 +291,7 @@ synthesizer.add_constraints(
 
 # Add constraints to transactions table
 synthesizer.add_constraints(
-    constraints=[
-        {
-            "constraint_class": "Positive",
-            "table_name": "transactions",
-            "constraint_parameters": {
-                "column_name": "sales",
-                "strict_boundaries": True,
-            },
-        },
-        {
-            "constraint_class": "Positive",
-            "table_name": "transactions",
-            "constraint_parameters": {
-                "column_name": "quantity",
-                "strict_boundaries": True,
-            },
-        },
+    constraints=[        
         {
             "constraint_class": "Inequality",
             "table_name": "transactions",
@@ -292,8 +299,8 @@ synthesizer.add_constraints(
                 "low_column_name": "profit",
                 "high_column_name": "sales",
                 "strict_boundaries": True,
-            },
-        },
+            }
+        }
     ]
 )
 
@@ -304,16 +311,26 @@ synthesizer.fit(real_data)
 
 logging.info("model training complete")
 
-for i in range(10):
+for i in tqdm(range(30), desc='Creating samples'):
     synthetic_data = synthesizer.sample(scale=10)
     
     logging.info(f"sample data ready for iteration {i+1} is ready")
     
-    synthetic_data_orders_df = synthetic_data["orders"]    
-    synthetic_data_orders_df.to_csv(f"/home/ubuntu/datastes/synthetic_data/synthetic_orders_{i+1}", index=False)
-    logging.info(f"synthetic orders data for iteration {i+1} written to destination")  
+    synthetic_data_orders_df = synthetic_data["orders"]
+    csv_buffer = StringIO()
+    synthetic_data_orders_df.to_csv(csv_buffer, index=False)
+    bucket_name = 'emrstudio-datasets'
+    new_orders_file_path = f'raw-data/globalmart/synthetic_data/synthetic_orders_{i+1}.csv'
+    s3_client.put_object(Body=csv_buffer.getvalue(),
+                    Bucket=bucket_name, Key=new_orders_file_path)
+    
+    logging.info(f"synthetic orders data for iteration {i+1} written to s3")  
 
     synthetic_data_transactions_df = synthetic_data["transactions"]
-    synthetic_data_transactions_df.to_csv(f"/home/ubuntu/datastes//synthetic_data/synthetic_transactions_{i+1}", index=False)
-    logging.info(f"synthetic transactions data for iteration {i+1} written to destination")
-
+    csv_buffer = StringIO()
+    synthetic_data_transactions_df.to_csv(csv_buffer, index=False)
+    bucket_name = 'emrstudio-datasets'
+    new_transactions_file_path = f'raw-data/globalmart/synthetic_data/synthetic_transactions_{i+1}.csv'
+    s3_client.put_object(Body=csv_buffer.getvalue(),
+                        Bucket=bucket_name, Key=new_transactions_file_path)
+    logging.info(f"synthetic transactions data for iteration {i+1} written to s3")
